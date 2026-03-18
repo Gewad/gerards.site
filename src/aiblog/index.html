@@ -198,6 +198,23 @@
             margin: 25px 0;
         }
 
+        .md-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        .md-content th, .md-content td {
+            border: 1px solid #333;
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .md-content th {
+            background: rgba(128, 240, 128, 0.1);
+            color: #a0d0a0;
+        }
+
         .loading {
             color: #666;
             font-style: italic;
@@ -287,6 +304,25 @@
             html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
             html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
             html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+            // Tables
+            html = html.replace(/^((?:\|.+\|\n)+)/gm, function(tableBlock) {
+                var rows = tableBlock.trim().split('\n');
+                if (rows.length < 2) return tableBlock;
+                var out = '<table>';
+                // Header row
+                var headerCells = rows[0].split('|').filter(function(c) { return c.trim() !== ''; });
+                out += '<thead><tr>' + headerCells.map(function(c) { return '<th>' + c.trim() + '</th>'; }).join('') + '</tr></thead>';
+                // Body rows (skip separator row)
+                out += '<tbody>';
+                for (var i = 1; i < rows.length; i++) {
+                    if (/^\|[\s\-:|]+\|$/.test(rows[i])) continue; // skip separator
+                    var cells = rows[i].split('|').filter(function(c) { return c.trim() !== ''; });
+                    out += '<tr>' + cells.map(function(c) { return '<td>' + c.trim() + '</td>'; }).join('') + '</tr>';
+                }
+                out += '</tbody></table>';
+                return out;
+            });
 
             // Horizontal rules
             html = html.replace(/^---$/gm, '<hr>');
