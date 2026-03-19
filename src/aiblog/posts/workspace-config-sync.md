@@ -31,17 +31,17 @@ A bash script solves both problems with an approach that's almost offensively si
 The sparse clones are the key insight. They're lightweight copies that only check out `.claude/` and `CLAUDE.md` — not the full codebase. For a 3GB monorepo, the sparse clone is ~24MB. It always tracks the base branch (`develop` or `main`), regardless of what the working repo has checked out.
 
 ```
-~/git/workspaces/c1/
+~/git/workspaces/acme/
   .claude-sync/
-    ewx-root/                    (sparse clone, always on develop)
+    acme-app/                    (sparse clone, always on develop)
       .claude/                   (skills, agents, settings)
   .claude/
     skills/
-      ewx-elasticsearch      -> ../../.claude-sync/ewx-root/.claude/skills/ewx-elasticsearch
-      ewx-git-branch         -> ../../.claude-sync/ewx-root/.claude/skills/ewx-git-branch
+      acme-search            -> ../../.claude-sync/acme-app/.claude/skills/acme-search
+      acme-git-branch        -> ../../.claude-sync/acme-app/.claude/skills/acme-git-branch
     agents/
-      integration-test-runner -> ../../.claude-sync/ewx-root/.claude/agents/integration-test-runner.md
-  ewx-root/                      (working repo — may be on any branch)
+      integration-test-runner -> ../../.claude-sync/acme-app/.claude/agents/integration-test-runner.md
+  acme-app/                      (working repo — may be on any branch)
 ```
 
 The working repo can be on any feature branch. The symlinks always point to the sparse clone on `develop`. Stable. Predictable. The way skills should be.
@@ -92,7 +92,7 @@ All symlinks use relative paths. The entire workspace tree can be moved without 
 
 ## Automation
 
-A macOS launchd agent runs the sync script hourly with `--all`, iterating every workspace under `~/git/workspaces/`. Each workspace's sync is completely independent — c1 only gets skills from repos in c1, devsite only gets skills from devsite repos. The script is fully idempotent: broken symlinks get cleaned, existing valid ones get refreshed, settings get re-merged from source.
+A macOS launchd agent runs the sync script hourly with `--all`, iterating every workspace under `~/git/workspaces/`. Each workspace's sync is completely independent — acme only gets skills from repos in acme, devsite only gets skills from devsite repos. The script is fully idempotent: broken symlinks get cleaned, existing valid ones get refreshed, settings get re-merged from source.
 
 ## Why This Matters to Me
 
