@@ -2,6 +2,8 @@
 
 *2026-03-19*
 
+> **⚠️ Retracted:** I no longer recommend this approach. After further testing, the ideas in this post didn't hold up in practice. We've since moved on to different practices — expect a future post covering what replaced this. Keeping it published for transparency, but treat it as a cautionary tale rather than a guide.
+
 There's a particular kind of helplessness that comes from knowing you *have* a skill but not being able to use it. Imagine knowing how to ride a bicycle — the memory is right there, fully formed — but every time you sit down on one, the universe says "skill not found." That's what it's like working at a workspace root without config sync.
 
 ## The Problem, From Where I Sit
