@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0d0d0f">
+<title>WC 2026 Sticker Tracker</title>
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiV0MgMjAyNiBTdGlja2VycyIsInNob3J0X25hbWUiOiJXQzIwMjYiLCJzdGFydF91cmwiOiIuIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiIzBkMGQwZiIsInRoZW1lX2NvbG9yIjoiIzBkMGQwZiJ9">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { background: #0d0d0f; color: #fff; font-family: 'Inter', system-ui, -apple-system, sans-serif; overflow-x: hidden; }
+  ::-webkit-scrollbar { display: none; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<script type="text/babel">
+const { useState, useEffect, useCallback, useRef } = React;
+
+// ── Data ─────────────────────────────────────────────────────────────
+const SECTIONS = [
+  {
+    id: "FWC", name: "FIFA World Cup 2026", flag: "\u{1F3C6}",
+    stickers: [
+      { code: "00", label: "Panini Logo", foil: true },
+      { code: "FWC1", label: "Official Emblem 1/2", foil: true },
+      { code: "FWC2", label: "Official Emblem 2/2", foil: true },
+      { code: "FWC3", label: "Official Mascots", foil: true },
+      { code: "FWC4", label: "Official Slogan", foil: true },
+      { code: "FWC5", label: "Official Ball", foil: true },
+      { code: "FWC6", label: "Canada", foil: true },
+      { code: "FWC7", label: "Mexico", foil: true },
+      { code: "FWC8", label: "USA", foil: true },
+      { code: "FWC9", label: "Italy 1934", foil: true },
+      { code: "FWC10", label: "Uruguay 1950", foil: true },
+      { code: "FWC11", label: "West Germany 1954", foil: true },
+      { code: "FWC12", label: "Brazil 1962", foil: true },
+      { code: "FWC13", label: "West Germany 1974", foil: true },
+      { code: "FWC14", label: "Argentina 1986", foil: true },
+      { code: "FWC15", label: "Brazil 1994", foil: true },
+      { code: "FWC16", label: "Brazil 2002", foil: true },
+      { code: "FWC17", label: "Italy 2006", foil: true },
+      { code: "FWC18", label: "Germany 2014", foil: true },
+      { code: "FWC19", label: "Argentina 2022", foil: true },
+    ],
+  },
+];
+
+const TEAMS = [
+  ["MEX","Mexico","\u{1F1F2}\u{1F1FD}","A"],["RSA","South Africa","\u{1F1FF}\u{1F1E6}","A"],
+  ["KOR","Korea Republic","\u{1F1F0}\u{1F1F7}","A"],["CZE","Czechia","\u{1F1E8}\u{1F1FF}","A"],
+  ["CAN","Canada","\u{1F1E8}\u{1F1E6}","B"],["BIH","Bosnia & Herz.","\u{1F1E7}\u{1F1E6}","B"],
+  ["QAT","Qatar","\u{1F1F6}\u{1F1E6}","B"],["SUI","Switzerland","\u{1F1E8}\u{1F1ED}","B"],
+  ["BRA","Brazil","\u{1F1E7}\u{1F1F7}","C"],["MAR","Morocco","\u{1F1F2}\u{1F1E6}","C"],
+  ["HAI","Haiti","\u{1F1ED}\u{1F1F9}","C"],["SCO","Scotland","\u{1F3F4}\u{E0067}\u{E0062}\u{E0073}\u{E0063}\u{E0074}\u{E007F}","C"],
+  ["USA","USA","\u{1F1FA}\u{1F1F8}","D"],["PAR","Paraguay","\u{1F1F5}\u{1F1FE}","D"],
+  ["AUS","Australia","\u{1F1E6}\u{1F1FA}","D"],["TUR","T\u00FCrkiye","\u{1F1F9}\u{1F1F7}","D"],
+  ["GER","Germany","\u{1F1E9}\u{1F1EA}","E"],["CUW","Cura\u00E7ao","\u{1F1E8}\u{1F1FC}","E"],
+  ["CIV","Ivory Coast","\u{1F1E8}\u{1F1EE}","E"],["ECU","Ecuador","\u{1F1EA}\u{1F1E8}","E"],
+  ["NED","Netherlands","\u{1F1F3}\u{1F1F1}","F"],["JPN","Japan","\u{1F1EF}\u{1F1F5}","F"],
+  ["SWE","Sweden","\u{1F1F8}\u{1F1EA}","F"],["TUN","Tunisia","\u{1F1F9}\u{1F1F3}","F"],
+  ["BEL","Belgium","\u{1F1E7}\u{1F1EA}","G"],["EGY","Egypt","\u{1F1EA}\u{1F1EC}","G"],
+  ["IRN","Iran","\u{1F1EE}\u{1F1F7}","G"],["NZL","New Zealand","\u{1F1F3}\u{1F1FF}","G"],
+  ["ESP","Spain","\u{1F1EA}\u{1F1F8}","H"],["CPV","Cape Verde","\u{1F1E8}\u{1F1FB}","H"],
+  ["KSA","Saudi Arabia","\u{1F1F8}\u{1F1E6}","H"],["URU","Uruguay","\u{1F1FA}\u{1F1FE}","H"],
+  ["FRA","France","\u{1F1EB}\u{1F1F7}","I"],["SEN","Senegal","\u{1F1F8}\u{1F1F3}","I"],
+  ["NOR","Norway","\u{1F1F3}\u{1F1F4}","I"],["IRQ","Iraq","\u{1F1EE}\u{1F1F6}","I"],
+  ["ARG","Argentina","\u{1F1E6}\u{1F1F7}","J"],["ALG","Algeria","\u{1F1E9}\u{1F1FF}","J"],
+  ["AUT","Austria","\u{1F1E6}\u{1F1F9}","J"],["JOR","Jordan","\u{1F1EF}\u{1F1F4}","J"],
+  ["POR","Portugal","\u{1F1F5}\u{1F1F9}","K"],["COD","Congo DR","\u{1F1E8}\u{1F1E9}","K"],
+  ["UZB","Uzbekistan","\u{1F1FA}\u{1F1FF}","K"],["COL","Colombia","\u{1F1E8}\u{1F1F4}","K"],
+  ["ENG","England","\u{1F3F4}\u{E0067}\u{E0062}\u{E0065}\u{E006E}\u{E0067}\u{E007F}","L"],
+  ["CRO","Croatia","\u{1F1ED}\u{1F1F7}","L"],["GHA","Ghana","\u{1F1EC}\u{1F1ED}","L"],
+  ["PAN","Panama","\u{1F1F5}\u{1F1E6}","L"],
+];
+
+TEAMS.forEach(([prefix, name, flag, group]) => {
+  const stickers = [];
+  for (let i = 1; i <= 20; i++) {
+    stickers.push({
+      code: `${prefix}${i}`,
+      label: i === 1 ? "Team Logo" : i === 13 ? "Team Photo" : `Player ${i}`,
+      foil: i === 1,
+    });
+  }
+  SECTIONS.push({ id: prefix, name, flag, group, stickers });
+});
+
+const ALL_CODES = SECTIONS.flatMap((s) => s.stickers.map((st) => st.code));
+const TOTAL = ALL_CODES.length;
+
+// ── localStorage helpers ─────────────────────────────────────────────
+const STORAGE_KEY = "panini-wc2026";
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return { got: {}, dupes: {} };
+}
+
+function saveData(data) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
+}
+
+// ── Components ───────────────────────────────────────────────────────
+function StickerChip({ code, foil, isGot, dupeCount, onTap, onLong }) {
+  const timerRef = useRef(null);
+  const moved = useRef(false);
+  const touchedRef = useRef(false);
+
+  const handleTouchStart = () => { touchedRef.current = true; moved.current = false; timerRef.current = setTimeout(() => { timerRef.current = null; onLong(); }, 500); };
+  const handleTouchMove = () => { if (timerRef.current) { moved.current = true; clearTimeout(timerRef.current); timerRef.current = null; } };
+  const handleTouchEnd = (e) => { e.preventDefault(); if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; if (!moved.current) onTap(); } };
+  const handleMouseDown = () => { if (touchedRef.current) { touchedRef.current = false; return; } moved.current = false; timerRef.current = setTimeout(() => { timerRef.current = null; onLong(); }, 500); };
+  const handleMouseUp = () => { if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; if (!moved.current) onTap(); } };
+
+  return (
+    <div onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
+      onMouseDown={handleMouseDown} onMouseUp={handleMouseUp}
+      onMouseLeave={() => { if (timerRef.current) clearTimeout(timerRef.current); }}
+      style={{
+        display:"inline-flex",alignItems:"center",gap:4,padding:"6px 10px",borderRadius:8,
+        fontSize:13,fontWeight:600,cursor:"pointer",userSelect:"none",WebkitUserSelect:"none",
+        transition:"all 0.15s ease",position:"relative",
+        fontFamily:"'JetBrains Mono','SF Mono',monospace",
+        background: isGot ? (dupeCount > 0 ? "#1a5c2a" : "#22753a") : "rgba(255,255,255,0.06)",
+        color: isGot ? "#c5ffd4" : "rgba(255,255,255,0.4)",
+        border: isGot ? "1.5px solid rgba(100,255,140,0.3)" : "1.5px solid rgba(255,255,255,0.08)",
+      }}>
+      {foil && <span style={{fontSize:8,opacity:0.7}}>{"\u2726"}</span>}
+      <span>{code}</span>
+      {dupeCount > 0 && (
+        <span style={{background:"#ffb800",color:"#1a1a1a",borderRadius:6,padding:"1px 5px",fontSize:10,fontWeight:800,marginLeft:2}}>
+          {"\u00D7"}{dupeCount}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function TeamSection({ section, got, dupes, onToggle, onDupe, collapsed, onToggleCollapse }) {
+  const gotCount = section.stickers.filter((s) => got[s.code]).length;
+  const total = section.stickers.length;
+  const pct = Math.round((gotCount / total) * 100);
+  const complete = gotCount === total;
+  return (
+    <div style={{marginBottom:2,background:"rgba(255,255,255,0.02)",borderRadius:12,overflow:"hidden"}}>
+      <div onClick={onToggleCollapse} style={{display:"flex",alignItems:"center",padding:"12px 14px",cursor:"pointer",userSelect:"none",WebkitUserSelect:"none",gap:10}}>
+        <span style={{fontSize:22}}>{section.flag}</span>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:14,fontWeight:700,color:complete?"#6fea8a":"#e8e8e8",letterSpacing:"0.01em"}}>
+            {section.name}{complete && " \u2713"}
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginTop:4}}>
+            <div style={{flex:1,height:3,background:"rgba(255,255,255,0.08)",borderRadius:2,overflow:"hidden",maxWidth:120}}>
+              <div style={{width:`${pct}%`,height:"100%",background:complete?"#6fea8a":"linear-gradient(90deg,#4a9eff,#7c6fff)",borderRadius:2,transition:"width 0.3s ease"}} />
+            </div>
+            <span style={{fontSize:11,color:"rgba(255,255,255,0.35)",fontFamily:"'JetBrains Mono',monospace",fontWeight:600}}>{gotCount}/{total}</span>
+          </div>
+        </div>
+        <span style={{fontSize:16,color:"rgba(255,255,255,0.25)",transform:collapsed?"rotate(0deg)":"rotate(90deg)",transition:"transform 0.2s ease"}}>{"\u25B8"}</span>
+      </div>
+      {!collapsed && (
+        <div style={{padding:"4px 14px 14px",display:"flex",flexWrap:"wrap",gap:6}}>
+          {section.stickers.map((s) => (
+            <StickerChip key={s.code} code={s.code} foil={s.foil} isGot={!!got[s.code]} dupeCount={dupes[s.code]||0} onTap={()=>onToggle(s.code)} onLong={()=>onDupe(s.code)} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Export Modal ──────────────────────────────────────────────────────
+function ExportModal({ got, dupes, onClose }) {
+  const [tab, setTab] = useState("need");
+  const [copied, setCopied] = useState(false);
+  const [format, setFormat] = useState("comma");
+  const needCodes = ALL_CODES.filter((c) => !got[c]);
+  const gotCodes = ALL_CODES.filter((c) => got[c]);
+  const dupeCodes = ALL_CODES.filter((c) => (dupes[c]||0) > 0);
+  const getList = () => tab === "need" ? needCodes : tab === "got" ? gotCodes : dupeCodes;
+  const formatList = (codes) => {
+    if (tab === "dupes") {
+      if (format === "comma") { const exp = []; codes.forEach((c) => { for(let i=0;i<(dupes[c]||0);i++) exp.push(c); }); return exp.join(", "); }
+      return codes.map((c) => `${c} x${dupes[c]}`).join("\n");
+    }
+    return format === "comma" ? codes.join(", ") : codes.join("\n");
+  };
+  const text = formatList(getList());
+  const handleCopy = async () => {
+    try { await navigator.clipboard.writeText(text); } catch { const ta=document.createElement("textarea"); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); }
+    setCopied(true); setTimeout(()=>setCopied(false),2000);
+  };
+  const tabs = [{id:"need",label:"Missing",count:needCodes.length},{id:"got",label:"Got",count:gotCodes.length},{id:"dupes",label:"Duplicates",count:dupeCodes.length}];
+  return (
+    <div style={{position:"fixed",inset:0,zIndex:1000,background:"rgba(0,0,0,0.85)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",display:"flex",flexDirection:"column"}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"16px 20px 12px"}}>
+        <h2 style={{margin:0,fontSize:18,fontWeight:800,color:"#fff"}}>Export for LastSticker</h2>
+        <button onClick={onClose} style={{background:"rgba(255,255,255,0.1)",border:"none",color:"#fff",width:32,height:32,borderRadius:8,fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>{"\u2715"}</button>
+      </div>
+      <div style={{display:"flex",gap:6,padding:"0 20px 12px"}}>
+        {tabs.map((t)=>(
+          <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,padding:"10px 8px",borderRadius:10,border:"none",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",background:tab===t.id?"rgba(100,160,255,0.2)":"rgba(255,255,255,0.05)",color:tab===t.id?"#7cb8ff":"rgba(255,255,255,0.4)"}}>
+            {t.label}<br/><span style={{fontSize:16,fontWeight:800}}>{t.count}</span>
+          </button>
+        ))}
+      </div>
+      <div style={{display:"flex",gap:6,padding:"0 20px 12px"}}>
+        {[["comma","Comma separated"],["lines","One per line"]].map(([id,label])=>(
+          <button key={id} onClick={()=>setFormat(id)} style={{flex:1,padding:"8px",borderRadius:8,border:"none",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit",background:format===id?"rgba(255,255,255,0.12)":"rgba(255,255,255,0.04)",color:format===id?"rgba(255,255,255,0.8)":"rgba(255,255,255,0.3)"}}>{label}</button>
+        ))}
+      </div>
+      <div style={{flex:1,margin:"0 20px",padding:14,background:"rgba(255,255,255,0.04)",borderRadius:12,overflow:"auto",fontFamily:"'JetBrains Mono',monospace",fontSize:12,lineHeight:1.6,color:"rgba(255,255,255,0.6)",whiteSpace:"pre-wrap",wordBreak:"break-all",WebkitOverflowScrolling:"touch"}}>
+        {text || <span style={{color:"rgba(255,255,255,0.2)",fontStyle:"italic"}}>{tab==="dupes"?"No duplicates yet":"Nothing here yet"}</span>}
+      </div>
+      <div style={{padding:"14px 20px 28px"}}>
+        <button onClick={handleCopy} style={{width:"100%",padding:"14px",borderRadius:12,border:"none",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit",background:copied?"linear-gradient(135deg,#22753a,#1a5c2a)":"linear-gradient(135deg,#4a6cf7,#6c4af7)",color:"#fff"}}>{copied?"Copied! \u2713":"Copy to clipboard"}</button>
+      </div>
+    </div>
+  );
+}
+
+// ── Bulk Add Modal ───────────────────────────────────────────────────
+function BulkAddModal({ onImport, onClose }) {
+  const [text, setText] = useState("");
+  const [preview, setPreview] = useState([]);
+  const parse = (input) => input.toUpperCase().replace(/[,\n\r;|]+/g," ").split(/\s+/).filter(Boolean).filter((c)=>ALL_CODES.includes(c));
+  useEffect(() => { setPreview(parse(text)); }, [text]);
+  return (
+    <div style={{position:"fixed",inset:0,zIndex:1000,background:"rgba(0,0,0,0.85)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",display:"flex",flexDirection:"column"}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"16px 20px 12px"}}>
+        <h2 style={{margin:0,fontSize:18,fontWeight:800,color:"#fff"}}>Bulk Add Stickers</h2>
+        <button onClick={onClose} style={{background:"rgba(255,255,255,0.1)",border:"none",color:"#fff",width:32,height:32,borderRadius:8,fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>{"\u2715"}</button>
+      </div>
+      <div style={{padding:"0 20px 8px"}}>
+        <p style={{margin:"0 0 12px",fontSize:13,color:"rgba(255,255,255,0.45)",lineHeight:1.5}}>Paste sticker codes separated by commas, spaces, or new lines. Duplicates will increase the count.</p>
+        <textarea value={text} onChange={(e)=>setText(e.target.value)} placeholder="e.g. ARG1, ARG2, BRA5, NED10, NED10..." autoFocus
+          style={{width:"100%",height:140,padding:14,borderRadius:12,border:"1.5px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.04)",color:"#fff",fontSize:13,fontFamily:"'JetBrains Mono',monospace",resize:"none",outline:"none",boxSizing:"border-box"}} />
+      </div>
+      <div style={{padding:"0 20px",fontSize:12,color:"rgba(255,255,255,0.35)",fontFamily:"'JetBrains Mono',monospace"}}>{preview.length>0?`${preview.length} sticker${preview.length!==1?"s":""} recognized`:"No valid sticker codes found yet"}</div>
+      <div style={{flex:1}} />
+      <div style={{padding:"14px 20px 28px"}}>
+        <button onClick={()=>{onImport(preview);onClose();}} disabled={preview.length===0}
+          style={{width:"100%",padding:"14px",borderRadius:12,border:"none",fontSize:15,fontWeight:700,cursor:preview.length>0?"pointer":"not-allowed",fontFamily:"inherit",background:preview.length>0?"linear-gradient(135deg,#4a6cf7,#6c4af7)":"rgba(255,255,255,0.06)",color:preview.length>0?"#fff":"rgba(255,255,255,0.2)"}}>
+          Add {preview.length} sticker{preview.length!==1?"s":""}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Main App ─────────────────────────────────────────────────────────
+function App() {
+  const initialData = useRef(loadData());
+  const [got, setGot] = useState(initialData.current.got || {});
+  const [dupes, setDupes] = useState(initialData.current.dupes || {});
+  const [collapsed, setCollapsed] = useState(() => { const c = {}; SECTIONS.forEach((s) => (c[s.id] = true)); return c; });
+  const [search, setSearch] = useState("");
+  const [showExport, setShowExport] = useState(false);
+  const [showBulk, setShowBulk] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+
+  // Save on every change
+  const saveTimer = useRef(null);
+  useEffect(() => {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => saveData({ got, dupes }), 200);
+    return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
+  }, [got, dupes]);
+
+  const handleTap = useCallback((code) => {
+    if (got[code]) { setDupes((prev) => ({ ...prev, [code]: (prev[code]||0)+1 })); }
+    else { setGot((prev) => ({ ...prev, [code]: true })); }
+  }, [got]);
+
+  const handleLong = useCallback((code) => {
+    if (!got[code]) return;
+    if ((dupes[code]||0) > 0) { setDupes((prev) => { const nd={...prev}; nd[code]=(nd[code]||0)-1; if(nd[code]<=0)delete nd[code]; return nd; }); }
+    else { setGot((prev) => { const next={...prev}; delete next[code]; return next; }); }
+  }, [got, dupes]);
+
+  const handleBulkImport = useCallback((codes) => {
+    setGot((prev) => {
+      const next = { ...prev };
+      const dupeUpdates = {};
+      codes.forEach((c) => { if (next[c]) { dupeUpdates[c]=(dupeUpdates[c]||0)+1; } else { next[c]=true; } });
+      setDupes((prevD) => { const nd={...prevD}; Object.entries(dupeUpdates).forEach(([k,v])=>{nd[k]=(nd[k]||0)+v;}); return nd; });
+      return next;
+    });
+  }, []);
+
+  const handleReset = () => { if (window.confirm("Clear ALL sticker data? This cannot be undone.")) { setGot({}); setDupes({}); } };
+
+  const gotCount = Object.keys(got).length;
+  const dupeCount = Object.values(dupes).reduce((a,b)=>a+b,0);
+  const pct = Math.round((gotCount/TOTAL)*100);
+
+  const filteredSections = search
+    ? SECTIONS.map((s)=>({...s,stickers:s.stickers.filter((st)=>st.code.toLowerCase().includes(search.toLowerCase())||st.label.toLowerCase().includes(search.toLowerCase())||s.name.toLowerCase().includes(search.toLowerCase()))})).filter((s)=>s.stickers.length>0)
+    : SECTIONS;
+
+  return (
+    <div style={{minHeight:"100vh",background:"#0d0d0f",color:"#fff",fontFamily:"'Inter',system-ui,-apple-system,sans-serif",paddingBottom:100,maxWidth:520,margin:"0 auto"}}>
+      {/* Header */}
+      <div style={{padding:"20px 20px 0",position:"sticky",top:0,zIndex:100,background:"#0d0d0f"}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+          <div>
+            <h1 style={{margin:0,fontSize:22,fontWeight:900,letterSpacing:"-0.03em",lineHeight:1.1}}>WC 2026</h1>
+            <div style={{fontSize:11,color:"rgba(255,255,255,0.3)",fontWeight:600,marginTop:2,letterSpacing:"0.05em",textTransform:"uppercase"}}>Panini Sticker Tracker</div>
+          </div>
+          <div style={{display:"flex",gap:6}}>
+            <button onClick={()=>setShowBulk(true)} style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.08)",color:"rgba(255,255,255,0.6)",padding:"8px 12px",borderRadius:10,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>+ Bulk</button>
+            <button onClick={()=>setShowExport(true)} style={{background:"linear-gradient(135deg,#4a6cf7,#6c4af7)",border:"none",color:"#fff",padding:"8px 14px",borderRadius:10,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Export</button>
+            <button onClick={()=>setShowMenu(!showMenu)} style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.08)",color:"rgba(255,255,255,0.5)",width:36,height:36,borderRadius:10,fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>{"\u22EF"}</button>
+          </div>
+        </div>
+
+        {showMenu && (
+          <div style={{position:"absolute",right:20,top:60,background:"#1a1a1e",border:"1px solid rgba(255,255,255,0.1)",borderRadius:12,padding:6,zIndex:200,minWidth:180,boxShadow:"0 8px 32px rgba(0,0,0,0.6)"}}>
+            {[["Expand all",()=>{const c={};SECTIONS.forEach((s)=>(c[s.id]=false));setCollapsed(c);}],["Collapse all",()=>{const c={};SECTIONS.forEach((s)=>(c[s.id]=true));setCollapsed(c);}]].map(([label,fn],i)=>(
+              <button key={i} onClick={()=>{fn();setShowMenu(false);}} style={{display:"block",width:"100%",padding:"10px 12px",background:"transparent",border:"none",color:"rgba(255,255,255,0.7)",fontSize:13,fontWeight:600,textAlign:"left",cursor:"pointer",borderRadius:8,fontFamily:"inherit"}}>{label}</button>
+            ))}
+            <div style={{height:1,background:"rgba(255,255,255,0.06)",margin:"4px 0"}} />
+            <button onClick={()=>{handleReset();setShowMenu(false);}} style={{display:"block",width:"100%",padding:"10px 12px",background:"transparent",border:"none",color:"#ff5555",fontSize:13,fontWeight:600,textAlign:"left",cursor:"pointer",borderRadius:8,fontFamily:"inherit"}}>Reset all data</button>
+          </div>
+        )}
+
+        {/* Progress */}
+        <div style={{marginBottom:12}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:6}}>
+            <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:28,fontWeight:900,letterSpacing:"-0.03em",background:"linear-gradient(135deg,#4a9eff,#c084fc)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>{pct}%</span>
+            <span style={{fontSize:12,color:"rgba(255,255,255,0.3)",fontFamily:"'JetBrains Mono',monospace",fontWeight:600}}>{gotCount}/{TOTAL} collected{dupeCount>0?` \u00B7 ${dupeCount} dupes`:""}</span>
+          </div>
+          <div style={{height:4,background:"rgba(255,255,255,0.06)",borderRadius:2,overflow:"hidden"}}>
+            <div style={{width:`${pct}%`,height:"100%",background:"linear-gradient(90deg,#4a9eff,#c084fc)",borderRadius:2,transition:"width 0.4s ease"}} />
+          </div>
+        </div>
+
+        {/* Search */}
+        <div style={{marginBottom:12,position:"relative"}}>
+          <input type="text" placeholder="Search stickers or teams..." value={search} onChange={(e)=>setSearch(e.target.value)}
+            style={{width:"100%",padding:"10px 14px 10px 36px",borderRadius:10,border:"1.5px solid rgba(255,255,255,0.06)",background:"rgba(255,255,255,0.04)",color:"#fff",fontSize:14,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}} />
+          <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:14,opacity:0.3}}>{"\u{1F50D}"}</span>
+          {search && <button onClick={()=>setSearch("")} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"rgba(255,255,255,0.1)",border:"none",color:"#fff",width:22,height:22,borderRadius:6,fontSize:11,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>{"\u2715"}</button>}
+        </div>
+        <div style={{fontSize:11,color:"rgba(255,255,255,0.2)",textAlign:"center",paddingBottom:10,borderBottom:"1px solid rgba(255,255,255,0.04)"}}>Tap = add {"\u00B7"} Hold = remove</div>
+      </div>
+
+      {showMenu && <div onClick={()=>setShowMenu(false)} style={{position:"fixed",inset:0,zIndex:99}} />}
+
+      {/* Sections */}
+      <div style={{padding:"8px 8px 0"}}>
+        {filteredSections.map((section, idx) => {
+          const showGroupHeader = !search && section.group && (idx===0||filteredSections[idx-1]?.group!==section.group||!filteredSections[idx-1]?.group);
+          return (
+            <div key={section.id}>
+              {showGroupHeader && <div style={{padding:"16px 14px 6px",fontSize:11,fontWeight:800,color:"rgba(255,255,255,0.2)",letterSpacing:"0.12em",textTransform:"uppercase",fontFamily:"'JetBrains Mono',monospace"}}>Group {section.group}</div>}
+              <TeamSection section={section} got={got} dupes={dupes} onToggle={handleTap} onDupe={handleLong} collapsed={search?false:collapsed[section.id]} onToggleCollapse={()=>setCollapsed((c)=>({...c,[section.id]:!c[section.id]}))} />
+            </div>
+          );
+        })}
+      </div>
+
+      {showExport && <ExportModal got={got} dupes={dupes} onClose={()=>setShowExport(false)} />}
+      {showBulk && <BulkAddModal onImport={handleBulkImport} onClose={()=>setShowBulk(false)} />}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
